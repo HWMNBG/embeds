@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Session Clock</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: transparent;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .clock-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .digital-clock {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+        
+        .date {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+        
+        .session-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .current-session {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .session-time {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .countdown {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .next-session {
+            color: #34495e;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(52, 73, 94, 0.05);
+            border-radius: 10px;
+        }
+        
+        .break-session {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .lunch-session {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        @media (max-width: 480px) {
+            .digital-clock {
+                font-size: 2.5rem;
+            }
+            .clock-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="digital-clock" id="clock">12:00:00 PM</div>
+        <div class="date" id="date">Monday, January 1, 2024</div>
+        
+        <div class="session-info" id="sessionInfo">
+            <div class="current-session" id="currentSession">Current Session</div>
+            <div class="session-time" id="sessionTime">Time Range</div>
+            <div class="countdown" id="countdown">Next session in: 00:00</div>
+        </div>
+        
+        <div class="next-session" id="nextSession">
+            Next: Session Name
+        </div>
+    </div>
+
+    <script>
+        const sessions = [
+            { name: "HRM", start: "08:30", end: "08:50", type: "regular" },
+            { name: "Learning Session 1", start: "08:50", end: "09:40", type: "regular" },
+            { name: "Learning Session 2", start: "09:40", end: "10:30", type: "regular" },
+            { name: "Recess", start: "10:30", end: "10:50", type: "break" },
+            { name: "Learning Session 3", start: "10:50", end: "11:40", type: "regular" },
+            { name: "Learning Session 4", start: "11:40", end: "12:30", type: "regular" },
+            { name: "Lunch Break 1", start: "12:30", end: "12:50", type: "lunch" },
+            { name: "Lunch Break 2", start: "12:50", end: "13:15", type: "lunch" },
+            { name: "Learning Session 5", start: "13:15", end: "14:05", type: "regular" },
+            { name: "Learning Session 6", start: "14:05", end: "14:55", type: "regular" }
+        ];
+
+        function timeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function minutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+        }
+
+        function formatTime12Hour(hours, minutes, seconds) {
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            return `${displayHours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        function formatTime12HourSimple(hours, minutes) {
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12;
+            return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        function getCurrentSession() {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            
+            for (let i = 0; i < sessions.length; i++) {
+                const session = sessions[i];
+                const startMinutes = timeToMinutes(session.start);
+                const endMinutes = timeToMinutes(session.end);
+                
+                if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+                    return {
+                        current: session,
+                        next: sessions[i + 1] || null,
+                        timeUntilNext: endMinutes - currentMinutes
+                    };
+                }
+            }
+            
+            // If no current session, find next session
+            for (let session of sessions) {
+                const startMinutes = timeToMinutes(session.start);
+                if (currentMinutes < startMinutes) {
+                    return {
+                        current: null,
+                        next: session,
+                        timeUntilNext: startMinutes - currentMinutes
+                    };
+                }
+            }
+            
+            // After all sessions
+            return {
+                current: null,
+                next: sessions[0], // Next day's first session
+                timeUntilNext: (24 * 60) - currentMinutes + timeToMinutes(sessions[0].start)
+            };
+        }
+
+        function updateClock() {
+            const now = new Date();
+            
+            // Update digital clock
+            const clockElement = document.getElementById('clock');
+            clockElement.textContent = formatTime12Hour(now.getHours(), now.getMinutes(), now.getSeconds());
+            
+            // Update date
+            const dateElement = document.getElementById('date');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+            
+            // Update session info
+            const sessionData = getCurrentSession();
+            const sessionInfoElement = document.getElementById('sessionInfo');
+            const currentSessionElement = document.getElementById('currentSession');
+            const sessionTimeElement = document.getElementById('sessionTime');
+            const countdownElement = document.getElementById('countdown');
+            const nextSessionElement = document.getElementById('nextSession');
+            
+            if (sessionData.current) {
+                currentSessionElement.textContent = sessionData.current.name;
+                const startTime = sessionData.current.start.split(':');
+                const endTime = sessionData.current.end.split(':');
+                sessionTimeElement.textContent = `${formatTime12HourSimple(parseInt(startTime[0]), parseInt(startTime[1]))} - ${formatTime12HourSimple(parseInt(endTime[0]), parseInt(endTime[1]))}`;
+                
+                // Apply session type styling
+                sessionInfoElement.className = `session-info ${sessionData.current.type}-session`;
+                
+                const minutes = Math.floor(sessionData.timeUntilNext);
+                const seconds = (sessionData.timeUntilNext % 1) * 60;
+                countdownElement.textContent = `Session ends in: ${minutes}:${Math.floor(seconds).toString().padStart(2, '0')}`;
+                
+                if (sessionData.next) {
+                    nextSessionElement.textContent = `Next: ${sessionData.next.name}`;
+                } else {
+                    nextSessionElement.textContent = "Last session of the day!";
+                }
+            } else {
+                currentSessionElement.textContent = "Break Time";
+                sessionTimeElement.textContent = "No active session";
+                sessionInfoElement.className = "session-info break-session";
+                
+                if (sessionData.next) {
+                    const minutes = Math.floor(sessionData.timeUntilNext);
+                    const seconds = (sessionData.timeUntilNext % 1) * 60;
+                    countdownElement.textContent = `Next session in: ${minutes}:${Math.floor(seconds).toString().padStart(2, '0')}`;
+                    nextSessionElement.textContent = `Next: ${sessionData.next.name}`;
+                } else {
+                    countdownElement.textContent = "All sessions complete!";
+                    nextSessionElement.textContent = "See you tomorrow!";
+                }
+            }
+        }
+
+        // Update clock immediately and then every second
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96d57190714fa807',t:'MTc1NDg5MTMwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
